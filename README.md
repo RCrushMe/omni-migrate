@@ -51,6 +51,28 @@ Or use the all-in-one command:
 node --experimental-sqlify omni-migrate.mjs migrate --force
 ```
 
+## ⚠️ Backup First
+
+Before any migration, **copy your database files to a safe location** outside the OmniRoute data directory. Uninstallers and the `delete` command remove the **entire** `~/.omniroute/` (or `%APPDATA%\omniroute\`) folder including exports.
+
+```bash
+# Windows
+mkdir D:\backups\omniroute
+copy "%APPDATA%\omniroute\storage.sqlite" "D:\backups\omniroute\storage.sqlite.bak"
+copy "%APPDATA%\omniroute\storage.sqlite-wal" "D:\backups\omniroute\storage.sqlite-wal.bak"
+copy "%APPDATA%\omniroute\storage.sqlite-shm" "D:\backups\omniroute\storage.sqlite-shm.bak"
+xcopy "%APPDATA%\omniroute\migrate-export" "D:\backups\omniroute\migrate-export\" /E /I
+
+# Linux
+mkdir -p ~/backups/omniroute
+cp ~/.omniroute/storage.sqlite ~/backups/omniroute/
+cp ~/.omniroute/storage.sqlite-wal ~/backups/omniroute/
+cp ~/.omniroute/storage.sqlite-shm ~/backups/omniroute/
+cp -r ~/.omniroute/migrate-export ~/backups/omniroute/
+```
+
+**Rule:** Never keep the only copy inside the OmniRoute data directory.
+
 ## Commands
 
 | Command | Description | Server needed? |
@@ -167,6 +189,54 @@ All non-ephemeral tables with data, including:
 - `quota_groups` — quota allocation settings
 - `key_value` — all namespace/key/value settings
 - And more (350+ rows typically)
+
+## Using AI Agent for Assistance
+
+This repo includes `AGENTS.md` with comprehensive instructions for AI coding agents. You can use it to get help with:
+
+- **Diagnosing** database corruption, cold restart failures, WAL/SHM issues
+- **Running** safe database operations (read-only queries, exports, comparisons)
+- **Debugging** Electron binary ABI mismatches, process locks, schema mismatches
+- **Generating** migration commands and verifying results
+
+### How to use
+
+1. Point your AI agent (Claude, Copilot, etc.) at this repo
+2. The agent reads `AGENTS.md` automatically for safety rules and procedures
+3. Ask questions like:
+   - "Why is my OmniRoute Electron crashing on cold start?"
+   - "Compare the npm and Electron databases"
+   - "How do I safely migrate to a fresh install?"
+   - "Check my app.log for #7132 errors"
+
+### What the agent can safely do
+
+| Safe (read-only) | Needs your confirmation |
+|------------------|------------------------|
+| Export database | Import/SQL write |
+| Read schema & row counts | Delete database |
+| Compare two databases | Stop/start Electron |
+| Check logs for errors | WAL/SHM cleanup |
+
+### Commands the agent will generate (not execute)
+
+These are destructive — the agent will write out the command for you to run:
+
+```bash
+# Delete database
+del "%APPDATA%\omniroute\storage.sqlite"    # Windows
+rm ~/.omniroute/storage.sqlite              # Linux
+
+# Clean WAL/SHM
+del "%APPDATA%\omniroute\storage.sqlite-wal"
+del "%APPDATA%\omniroute\storage.sqlite-shm"
+
+# Force kill Electron
+taskkill /F /IM OmniRoute.exe               # Windows
+killall OmniRoute                            # Linux
+```
+
+See `AGENTS.md` for the full safety rules and procedures.
 
 ## Limitations
 

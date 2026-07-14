@@ -51,6 +51,28 @@ omniroute serve
 node --experimental-sqlite omni-migrate.mjs migrate --force
 ```
 
+## ⚠️ 先备份
+
+迁移前，务必将数据库文件复制到 OmniRoute 数据目录之外的安全位置。卸载程序和 `delete` 命令会删除**整个** `~/.omniroute/`（或 `%APPDATA%\omniroute\`）文件夹，包括导出文件。
+
+```bash
+# Windows
+mkdir D:\backups\omniroute
+copy "%APPDATA%\omniroute\storage.sqlite" "D:\backups\omniroute\storage.sqlite.bak"
+copy "%APPDATA%\omniroute\storage.sqlite-wal" "D:\backups\omniroute\storage.sqlite-wal.bak"
+copy "%APPDATA%\omniroute\storage.sqlite-shm" "D:\backups\omniroute\storage.sqlite-shm.bak"
+xcopy "%APPDATA%\omniroute\migrate-export" "D:\backups\omniroute\migrate-export\" /E /I
+
+# Linux
+mkdir -p ~/backups/omniroute
+cp ~/.omniroute/storage.sqlite ~/backups/omniroute/
+cp ~/.omniroute/storage.sqlite-wal ~/backups/omniroute/
+cp ~/.omniroute/storage.sqlite-shm ~/backups/omniroute/
+cp -r ~/.omniroute/migrate-export ~/backups/omniroute/
+```
+
+**原则：永远不要让唯一副本留在 OmniRoute 数据目录内。**
+
 ## 命令说明
 
 | 命令 | 说明 | 需要服务器？ |
@@ -167,6 +189,54 @@ cp ~/.local/share/omniroute/resources/app/node_modules/better-sqlite3/build/Rele
 - `quota_groups` — 配额分配设置
 - `key_value` — 所有命名空间/键/值设置
 - 更多（通常 350+ 行数据）
+
+## 使用 AI Agent 辅助
+
+本仓库包含 `AGENTS.md`，为 AI 编程 Agent 提供详细的安全规则和操作流程。可用于：
+
+- **诊断**数据库损坏、冷启动失败、WAL/SHM 问题
+- **运行**安全的数据库操作（只读查询、导出、比对）
+- **调试**Electron 二进制 ABI 不匹配、进程锁、schema 不匹配
+- **生成**迁移命令并验证结果
+
+### 使用方法
+
+1. 将 AI Agent（Claude、Copilot 等）指向本仓库
+2. Agent 自动读取 `AGENTS.md` 获取安全规则和流程
+3. 直接提问，例如：
+   - "我的 OmniRoute Electron 冷启动为什么崩溃？"
+   - "比对 npm 和 Electron 的数据库"
+   - "如何安全迁移到全新安装？"
+   - "检查 app.log 中的 #7132 错误"
+
+### Agent 可安全执行的操作
+
+| 安全（只读） | 需要你确认 |
+|-------------|-----------|
+| 导出数据库 | 导入/SQL 写入 |
+| 读取 schema 和行数 | 删除数据库 |
+| 比对两个数据库 | 停止/启动 Electron |
+| 检查日志错误 | WAL/SHM 清理 |
+
+### Agent 会生成但不执行的命令
+
+这些是破坏性操作，Agent 会写出命令由你运行：
+
+```bash
+# 删除数据库
+del "%APPDATA%\omniroute\storage.sqlite"    # Windows
+rm ~/.omniroute/storage.sqlite              # Linux
+
+# 清理 WAL/SHM
+del "%APPDATA%\omniroute\storage.sqlite-wal"
+del "%APPDATA%\omniroute\storage.sqlite-shm"
+
+# 强制终止 Electron
+taskkill /F /IM OmniRoute.exe               # Windows
+killall OmniRoute                            # Linux
+```
+
+完整安全规则和流程请查看 `AGENTS.md`。
 
 ## 限制
 
