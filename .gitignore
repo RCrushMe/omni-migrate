@@ -1,0 +1,9 @@
+node_modules/
+migrate-export/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.json
+!package.json
+.DS_Store
+Thumbs.db
